@@ -22,7 +22,7 @@ var conn         = amqp.createConnection()
   , PUBLISH_RATE = 3000 //every second
   , count        = 1;
 
-var prefix = 'test5_';
+var prefix = 'local1_';
 var mainExchangeKey = prefix + 'exchange';
 var deadletterExchangeKey = prefix + 'deadletter_exchange';
 var mainQueueKey = prefix + 'main_queue';

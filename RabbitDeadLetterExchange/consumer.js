@@ -20,7 +20,7 @@ amqpOptions.password = 'test';
 
 var conn = amqp.createConnection(amqpOptions);
 
-var prefix = 'test5_';
+var prefix = 'local1_';
 var mainExchangeKey = prefix + 'exchange';
 var mainQueueKey = prefix + 'main_queue';
 var waitQueueKey = prefix + 'wait_queue';
