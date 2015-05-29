@@ -1,0 +1,5 @@
+OSX Terminal various
+
+Avoid duplicates in commands history:
+set histdup='all'
+
