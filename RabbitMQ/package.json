@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "amqp": "0.2.4"
+    "amqp": "0.2.4",
+    "time": "0.11.1"
   }
 }
