@@ -1,0 +1,17 @@
+{
+	"name": "LoadTestJS",
+	"description": "LoadTestJS",
+	"version": "0.0.1",
+	"private": true,
+	"author": "Damiano Fusco”,
+	"main": "./loadTest.js",
+	"scripts": {
+		"start": "node ./loadTestMany”
+    },
+	"dependencies": {
+		"restify":	"2.8.5",
+		"async":	"1.1.0"
+	},
+	"devDependencies": {
+	}
+}
