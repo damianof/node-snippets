@@ -88,7 +88,7 @@ module.exports = (function(){
 					logger.info('--- Using RabbitMQ Instance at ' + rabbitConfig.rabbit.host + ':' + rabbitConfig.rabbit.port + ' ---');
 				}
 				
-				logger.info('--- NMAPI-Queueing: setupRabbitMQ: amqpOptions', JSON.stringify(amqpOptions));
+				logger.info('--- amqpClient: setupRabbitMQ: amqpOptions', JSON.stringify(amqpOptions));
 				
 				// connect
 				connection = amqp.createConnection(amqpOptions);
@@ -121,7 +121,7 @@ module.exports = (function(){
 	
 	var checkConnection = function(methodName){
 		if (!rabbitConnected){
-			var e = new Error('NMAPI-Queueing: ' + methodName + ': RabbitMQ not connected');
+			var e = new Error('amqpClient: ' + methodName + ': RabbitMQ not connected');
 			logger.error(e);
 			throw e;
 		}
@@ -131,7 +131,7 @@ module.exports = (function(){
 		* @method assertExchange
 	*/
 	var assertExchange = function(exchangeKey, exchangeOptions, callback) {
-		logger.info('MAPI-Queueing: assertExchange [' + exchangeKey + ']', exchangeOptions);
+		logger.info('amqpClient: assertExchange [' + exchangeKey + ']', exchangeOptions);
 		checkConnection('assertExchange');
 
 		try {
@@ -140,45 +140,45 @@ module.exports = (function(){
 			 	, function(result) {
 			 		emitter.emit(eventNames.assertExchange + '_' + exchangeKey, result);
 			 		if (callback){
-			 			logger.info('NMAPI-Queueing: assertExchange [' + exchangeKey + ']');
+			 			logger.info('amqpClient: assertExchange [' + exchangeKey + ']');
 			 			callback(result);
 			 		}
 			});
 		} catch(e){
-			logger.error('NMAPI-Queueing: assertExchange [' + exchangeKey + '] ERROR', e);
+			logger.error('amqpClient: assertExchange [' + exchangeKey + '] ERROR', e);
 			throw e;
 		}
 	};
 	
 	var assertQueue = function(queueKey, queueOptions, callback) {
-		//logger.info('MAPI-Queueing: assertQueue [' + queueKey + ']', queueOptions);
+		//logger.info('amqpClient: assertQueue [' + queueKey + ']', queueOptions);
 		checkConnection('assertQueue');
 		
 		try {
 			connection.queue(queueKey
 				, queueOptions
 				, function(result) {
-					//logger.info('NMAPI-Queueing: assertQueue [' + queueKey + ']');
+					//logger.info('amqpClient: assertQueue [' + queueKey + ']');
 					emitter.emit(eventNames.assertQueue + '_' + queueKey, result);
 					if (callback){
 						callback(result);
 					}
 				});
 		} catch(e){
-			logger.error('NMAPI-Queueing: ERROR assertQueue [' + queueKey + '] ERROR', e);
+			logger.error('amqpClient: ERROR assertQueue [' + queueKey + '] ERROR', e);
 			throw e;
 		}
 	};
 	
 	var bindQueueToExchange = function(queue, exchangeKey, callback) {
-		//logger.info('NMAPI-Queueing: bindQueueToExchange [' + queue.name + '] to exchange [' + exchangeKey + ']');
+		//logger.info('amqpClient: bindQueueToExchange [' + queue.name + '] to exchange [' + exchangeKey + ']');
 		checkConnection('bindQueue');
 		
 		try {
 			queue.bind(exchangeKey
 				, queue.name
 				, function() {
-					//logger.info('NMAPI-Queueing: bindQueueToExchange [' + queue.name + '] to exchange [' + exchangeKey + ']');
+					//logger.info('amqpClient: bindQueueToExchange [' + queue.name + '] to exchange [' + exchangeKey + ']');
 					emitter.emit(eventNames.bindQueue + '_' + queue.name + '_' + exchangeKey);
 				})
 
@@ -190,7 +190,7 @@ module.exports = (function(){
 					}
 				});
 		} catch(e){
-			logger.error('NMAPI-Queueing: ERROR bindQueueToExchange [' + queue.name + '] ERROR', e);
+			logger.error('amqpClient: ERROR bindQueueToExchange [' + queue.name + '] ERROR', e);
 			throw e;
 		}
 	};
@@ -216,7 +216,7 @@ module.exports = (function(){
 		checkConnection('initMainQueue');
 		
 		if (!exchanges.mainExchange || !queues.mainQueue){
-			var errMsg = 'NMAPI-Queueing: publishToMainQueue: ' + callerName + ': main exchange or main queue are undefined.';
+			var errMsg = 'amqpClient: publishToMainQueue: ' + callerName + ': main exchange or main queue are undefined.';
 			errMsg += ' You first need to call initMainQueue and make sure the exchange and queue have been successfully instantiated before you can publish to it.';
 			throw new Error(errMsg);
 		}
@@ -238,13 +238,13 @@ module.exports = (function(){
 	};
 
 	var initMainQueue = function(callback){
-		logger.info('MAPI-Queueing: initMainQueue [' + keys.mainQueueKey + '] on exchange [' + keys.mainExchangeKey + ']');
+		logger.info('amqpClient: initMainQueue [' + keys.mainQueueKey + '] on exchange [' + keys.mainExchangeKey + ']');
 		checkConnection('initMainQueue');
 
 		if (!exchanges.mainExchange && !queues.mainQueue){
 
 			var onBindMainQueue = function(result) {
-				logger.info('MAPI-Queueing: initMainQueue: onBindMainQueue [' + queues.mainQueue.name + '] ready');
+				logger.info('amqpClient: initMainQueue: onBindMainQueue [' + queues.mainQueue.name + '] ready');
 				// return exchange and queue to callback
 				if (callback){
 					callback({
@@ -255,14 +255,14 @@ module.exports = (function(){
 			};
 
 			var onAssertMainQueue = function(result) {
-				logger.info('MAPI-Queueing: initMainQueue: onAssertMainQueue [' + result.name + '] ready');
+				logger.info('amqpClient: initMainQueue: onAssertMainQueue [' + result.name + '] ready');
 				queues.mainQueue = result;
 				// bind to main queue
 				bindQueueToExchange(queues.mainQueue, keys.mainExchangeKey, onBindMainQueue);
 			};
 
 			var onAssertMainExchange = function(result) {
-				logger.info('MAPI-Queueing: initMainQueue: onAssertMainExchange [' + result.name + '] ready');
+				logger.info('amqpClient: initMainQueue: onAssertMainExchange [' + result.name + '] ready');
 				exchanges.mainExchange = result;
 
 				// assert main queue
@@ -290,13 +290,13 @@ module.exports = (function(){
 	};
 
 	var initWaitQueue = function(callback){
-		logger.info('MAPI-Queueing: initWaitQueue [' + keys.waitQueueKey + '] on exchange [' + keys.deadletterExchangeKey + ']');
+		logger.info('amqpClient: initWaitQueue [' + keys.waitQueueKey + '] on exchange [' + keys.deadletterExchangeKey + ']');
 		checkConnection('initWaitQueue');
 
 		if (!exchanges.deadletterExchange && !queues.waitQueue){
 
 			var onBindWaitQueue = function(){
-				logger.info('MAPI-Queueing: initWaitQueue: onBindWaitQueue [' + queues.waitQueue.name + '] ready');
+				logger.info('amqpClient: initWaitQueue: onBindWaitQueue [' + queues.waitQueue.name + '] ready');
 				// return exchange and queue to callback
 				if (callback){
 					callback({
@@ -307,17 +307,17 @@ module.exports = (function(){
 			};
 
 			var onAssertWaitQueue = function(result){
-				logger.info('MAPI-Queueing: initWaitQueue: onAssertWaitQueue [' + result.name + ']: ready');
+				logger.info('amqpClient: initWaitQueue: onAssertWaitQueue [' + result.name + ']: ready');
 				queues.waitQueue = result;
 				bindQueueToExchange(queues.waitQueue, keys.deadletterExchangeKey, onBindWaitQueue);
 			};
 
 			var onAssertDeadletterExchange = function(result) {
-				logger.info('MAPI-Queueing: initWaitQueue: onAssertDeadletterExchange [' + result.name + ']');
+				logger.info('amqpClient: initWaitQueue: onAssertDeadletterExchange [' + result.name + ']');
 				exchanges.deadletterExchange = result;
 				
 				if (!rabbitConfig.deadletterTTL || isNaN(rabbitConfig.deadletterTTL)){
-					throw new Error('NMAPI-Queueing: ERROR. Please add deadletterTTL value to rabbitConfig section');
+					throw new Error('amqpClient: ERROR. Please add deadletterTTL value to rabbitConfig section');
 				}
 
 				// assert wait queue
@@ -347,24 +347,24 @@ module.exports = (function(){
 	};
 
 	var initJobQueues = function(numJobQueues, jobQueuesConsumeCallback, callback){
-		logger.info('MAPI-Queueing: initJobQueues on exchange [' + keys.jobExchangeKey + '] numJobQueues ' + numJobQueues);
+		logger.info('amqpClient: initJobQueues on exchange [' + keys.jobExchangeKey + '] numJobQueues ' + numJobQueues);
 		checkConnection('initJobQueues');
 
 		if (!exchanges.jobExchange){
 
 			var setupJobQueues = function(){
-				logger.info('MAPI-Queueing: initJobQueues: numJobQueues:', numJobQueues);
+				logger.info('amqpClient: initJobQueues: numJobQueues:', numJobQueues);
 
 				var queuesCount = 0;
 				var onBindJobQueue = function (jobQueue){
-					//logger.info('MAPI-Queueing: onBindJobQueue: result:', jobQueue.name);
+					//logger.info('amqpClient: onBindJobQueue: result:', jobQueue.name);
 					queuesCount++;
 
 					// if a function to consume the job queue has been passed
 					// subscribe to the queue with that
 					if (jobQueuesConsumeCallback){
 						// subscribe to main queue
-						//logger.info('MAPI-Queueing: onBindJobQueue: subscribe to: ', jobQueue.name);
+						//logger.info('amqpClient: onBindJobQueue: subscribe to: ', jobQueue.name);
 						jobQueue.subscribe({
 								ack: true
 								, prefetchCount: 1
@@ -376,7 +376,7 @@ module.exports = (function(){
 						return;
 					} else {
 						// when all job queues are ready, callback
-						logger.info('MAPI-Queueing: onBindJobQueue: all ' + queuesCount + ' job queues ready.', typeof callback);
+						logger.info('amqpClient: onBindJobQueue: all ' + queuesCount + ' job queues ready.', typeof callback);
 						callback({
 							jobExchange: exchanges.jobExchange
 						});
@@ -384,7 +384,7 @@ module.exports = (function(){
 				};
 
 				var onAssertJobQueue = function(jobQueue) {
-					//logger.info('MAPI-Queueing: onAssertJobQueue:', jobQueue.name);
+					//logger.info('amqpClient: onAssertJobQueue:', jobQueue.name);
 					queues.jobQueues.push(jobQueue);
 					// bind to main queue
 					bindQueueToExchange(jobQueue, keys.jobExchangeKey, onBindJobQueue);				
@@ -405,7 +405,7 @@ module.exports = (function(){
 			};
 
 			var onAssertJobExchange = function(result) {
-				logger.info('MAPI-Queueing: initJobQueues: onAssertJobExchange [' + result.name + ']');
+				logger.info('amqpClient: initJobQueues: onAssertJobExchange [' + result.name + ']');
 				exchanges.jobExchange = result;
 				setupJobQueues();
 			};
@@ -423,7 +423,7 @@ module.exports = (function(){
 	/**
 		* @method getInstance
 		* @param {Object} config  the configuration object
-		* @param {NMAPI-Logging} loggerClient  an instance of the logger
+		* @param {loggingClient} loggerClient  an instance of the logger
 		* @description
 		* Init the singleton exposed to consuming code.
 	*/
