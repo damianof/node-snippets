@@ -9,3 +9,10 @@ Delete all queues
 
 Delete all exchanges
 ./rabbitmqadmin -f tsv -q list queues name | while read queue; do ./rabbitmqadmin -q delete queue name=${queue}; done
+
+
+./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list exchanges name | while read exchange; do ./rabbitmqadmin --username=guest --password=guest -q delete exchange name=${exchange}; done
+
+./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list queues name | while read queue; do ./rabbitmqadmin --username=guest --password=guest -q delete queue name=${queue}; done
+
+
