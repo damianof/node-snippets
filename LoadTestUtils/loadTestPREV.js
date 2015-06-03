@@ -10,7 +10,7 @@ var _intervalBetweenRequests = config.intervalBetweenRequests; // this value is 
 var _howManyId3 = config.howManyId3; // how many id3 data points we send every _intervalBetweenRequests
 var session_id;
 
-// i.e. 'http://localhost:3000/nmapi/v1/' or 'http://devnielsencollection-14.nielsen.mod.ec/nmapi/v1/';
+// i.e. 'http://localhost:3000/api/v1/'
 var baseUrl = config.apiBaseUrl;
 var app_id = config.appId;
 
@@ -79,7 +79,7 @@ var task_LoadMetadata = {
 	}	
 };
 
-var dataPrefix = 'www.nielsen.com/X100zdCIGeIlgZnkYj6UvQ: : /6mPaots2oVnItYHCYzp0Yw: : /5k0Cb0ZUOvGrV-fho5xWJF3k14WNfgdyeyEGwlAyUT242tTY9uiAtkTWdElIMCXTK8QamZdZWWVLfSbZeo9VzSlOiPZQ8RLhGpInjK3qwUaLwUpfXTTN0IgZ4iWBmeRiPpS9X100zdCIGeIlgZnkYj6UvVKyPIZSsjyQPPY: /00000/583';
+var dataPrefix = 'www.domain.com/X100zdCIGeIlgZnkYj6UvQ: : /6mPaots2oVnItYHCYzp0Yw: : /5k0Cb0ZUOvGrV-fho5xWJF3k14WNfgdyeyEGwlAyUT242tTY9uiAtkTWdElIMCXTK8QamZdZWWVLfSbZeo9VzSlOiPZQ8RLhGpInjK3qwUaLwUpfXTTN0IgZ4iWBmeRiPpS9X100zdCIGeIlgZnkYj6UvVKyPIZSsjyQPPY: /00000/583';
 
 var TaskSendID3 = function(sequence, payload){
 	var self = this;

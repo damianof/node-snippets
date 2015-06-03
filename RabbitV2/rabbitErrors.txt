@@ -1,6 +1,0 @@
-error: onRabbitError { [Error: PRECONDITION_FAILED - inequivalent arg 'auto_delete' for queue 'local_main_queue' in vhost '/': received 'true' but current is 'false'] code: 406 }
-
-error: Error on connection with the RabbitMQ server. Error is **** { [Error: NOT_FOUND - no exchange 'amq.topic' in vhost '/'] code: 404 }
-
-error: Error on connection with the RabbitMQ server. Error is **** { [Error: PRECONDITION_FAILED - unknown delivery tag 1] code: 406 }
-
