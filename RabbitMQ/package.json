@@ -1,15 +1,14 @@
 {
-  "name": "RabbitDeadLetterExchange",
+  "name": "RabbitMQSandbox",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Damiano Fusco",
   "dependencies": {
     "amqp": "0.2.4",
-    "time": "0.11.1"
+    "time": "^0.11.3"
   }
 }
