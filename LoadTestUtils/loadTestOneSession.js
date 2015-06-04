@@ -4,18 +4,19 @@
 var config = require('./config.js')
 	, logging = require('./logging.js')
 	, restify = require('restify')
-	, async = require('async');
+	, async = require('async')
+	, sharedData = require('./sharedData');
 var logger = logging.getClient(config.logging);
 
 var _intervalBetweenRequests = config.intervalBetweenRequests; // this value is in milliseconds - 6000 equals 6 seconds
 var _howManyId3 = config.howManyId3; // how many id3 data points we send every _intervalBetweenRequests
-// i.e. 'http://localhost:3000/api/v1/''
+// i.e. 'http://localhost:3000/nmapi/v1/' or 'http://devnielsencollection-14.nielsen.mod.ec/nmapi/v1/';
 var baseUrl = config.apiBaseUrl;
 var app_id = config.appId;
 
 
 var create  = function() {
-	
+
 	var apiRoutes = {
 		sessions: baseUrl + app_id + '/sessions'
 	};
@@ -29,6 +30,14 @@ var create  = function() {
 	// Creates a restify JSON client
 	var client = restify.createJsonClient({
 		url: baseUrl
+		, connectTimeout: 10000
+		, requestTimeout: 10000
+		, headers: {
+			'x-foo': 'LoadTestJS'
+		},
+		retry: {
+			'retries': 5
+		},
 	});
 	
 	var task_StartSession = {
@@ -81,7 +90,8 @@ var create  = function() {
 		}	
 	};
 	
-	var dataPrefix = 'www.domain.com/X100zdCIGeIlgZnkYj6UvQ==/6mPaots2oVnItYHCYzp0Yw==/5k0Cb0ZUOvGrV-fho5xWJF3k14WNfgdyeyEGwlAyUT242tTY9uiAtkTWdElIMCXTK8QamZdZWWVLfSbZeo9VzSlOiPZQ8RLhGpInjK3qwUaLwUpfXTTN0IgZ4iWBmeRiPpS9X100zdCIGeIlgZnkYj6UvVKyPIZSsjyQPPY=/00000/583';
+	//var dataPrefix = 'www.nielsen.com/X100zdCIGeIlgZnkYj6UvQ: : /6mPaots2oVnItYHCYzp0Yw: : /5k0Cb0ZUOvGrV-fho5xWJF3k14WNfgdyeyEGwlAyUT242tTY9uiAtkTWdElIMCXTK8QamZdZWWVLfSbZeo9VzSlOiPZQ8RLhGpInjK3qwUaLwUpfXTTN0IgZ4iWBmeRiPpS9X100zdCIGeIlgZnkYj6UvVKyPIZSsjyQPPY: /00000/583';
+	var dataPrefix = 'www.nielsen.com/X100zdCIGeIlgZnkYj6UvQ==/6mPaots2oVnItYHCYzp0Yw==/5k0Cb0ZUOvGrV-fho5xWJF3k14WNfgdyeyEGwlAyUT242tTY9uiAtkTWdElIMCXTK8QamZdZWWVLfSbZeo9VzSlOiPZQ8RLhGpInjK3qwUaLwUpfXTTN0IgZ4iWBmeRiPpS9X100zdCIGeIlgZnkYj6UvVKyPIZSsjyQPPY=/00000/583';
 	var TaskSendID3 = function(sequence, payload){
 		var self = this;
 		self.name = 'SendID3';
@@ -151,31 +161,43 @@ var create  = function() {
 		// add some items to the queue 
 		queue.push(task_StartSession, 1, function (err, args) {
 			printTaskResult(err, args);
-			var spl = args.res.headers.location.split('/sessions/');
-			logger.info('spl', spl);
-			var sessionId = spl[1];
-			apiRoutes.sessionid = apiRoutes.sessions + '/' + sessionId;
-			logger.info('SESSIONID: ', sessionId);
-		});
-		// add some items to the queue 
-		queue.push(task_LoadMetadata, 2, printTaskResult);
-		
-		var sequence = 3;
-		for (var i = 0; i < _howManyId3; i++){
-			var payload;
-			sequence = i + 3;
-			if (i < 10){
-				payload = {event: 'sendId3', data: dataPrefix + '0' + i + '0/00', sequence: sequence};
+			if (args.res){
+				var spl = args.res.headers.location.split('/sessions/');
+				logger.info('spl', spl);
+				var sessionId = spl[1];
+				apiRoutes.sessionid = apiRoutes.sessions + '/' + sessionId;
+				logger.info('SESSIONID: ', sessionId);
+
+				// we have a session id, add all the other tasks to the queue
+				queue.push(task_LoadMetadata, 2, printTaskResult);
+				
+				var sequence = 3;
+				for (var i = 0; i < _howManyId3; i++){
+					var payload;
+					sequence = i + 3;
+					if (i < 10){
+						payload = {event: 'sendId3', data: dataPrefix + '0' + i + '0/00', sequence: sequence};
+					} else {
+						payload = {event: 'sendId3', data: dataPrefix + i + '0/00', sequence: sequence};
+					}
+					var task_SendID3 = new TaskSendID3(sequence, payload);
+					queue.push(task_SendID3, sequence, printTaskResult);
+				}
+
+				logger.silly('sequence', sequence);
+
+				// add some items to the queue
+				task_StopEvent.sequence = ++sequence;
+				queue.push(task_StopEvent, task_StopEvent.sequence, printTaskResult);
+				// // add some items to the queue 
+				task_EndSession.sequence = ++sequence;
+				queue.push(task_EndSession, task_EndSession.sequence, printTaskResult);
+
 			} else {
-				payload = {event: 'sendId3', data: dataPrefix + i + '0/00', sequence: sequence};
+				sharedData.incompleteSessions++;
+				logger.error('Could not get Session ID. Number of incomplete sessions is ', sharedData.incompleteSessions);
 			}
-			var task_SendID3 = new TaskSendID3(sequence, payload);
-			queue.push(task_SendID3, sequence, printTaskResult);
-		}
-		// add some items to the queue
-		queue.push(task_StopEvent, ++sequence, printTaskResult);
-		// add some items to the queue 
-		queue.push(task_EndSession, ++sequence, printTaskResult);
+		});
 	};
 	
 	return {
