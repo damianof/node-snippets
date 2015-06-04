@@ -18,14 +18,14 @@ Delete all exchanges
 
 
 // match prefix just echo
-./rabbitmqadmin -V / --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list exchanges name | while read line; do if [[ "$line" == *local_* ]]; then echo "YES - $line"; else echo "NO - $line"; fi; done
+./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list exchanges name | while read line; do if [[ "$line" == devEAST_* ]]; then echo "YES - $line"; else echo "NO - $line"; fi; done
 
 
-./rabbitmqadmin -V / --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list queues name | while read line; do if [[ "$line" == *local_* ]]; then echo "YES - $line"; else echo "NO - $line"; fi; done
+./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list queues name | while read line; do if [[ "$line" == devEAST_* ]]; then echo "YES - $line"; else echo "NO - $line"; fi; done
 
 
 // match prefix with delete
-./rabbitmqadmin -V / --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list exchanges name | while read line; do if [[ "$line" == devEAST_* ]]; then ./rabbitmqadmin --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -q delete exchange name=${line}; else echo "NO - $line"; fi; done
+./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list exchanges name | while read line; do if [[ "$line" == devEAST_* ]]; then ./rabbitmqadmin --username=guest --password=guest -q delete exchange name=${line}; else echo "NO - $line"; fi; done
 
-./rabbitmqadmin -V / --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list queues name | while read line; do if [[ "$line" == devEAST_* ]]; then ./rabbitmqadmin --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -q delete queue name=${line}; else echo "NO - $line"; fi; done
+./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list queues name | while read line; do if [[ "$line" == devEAST_* ]]; then ./rabbitmqadmin --username=guest --password=guest -q delete queue name=${line}; else echo "NO - $line"; fi; done
 
