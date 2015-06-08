@@ -29,3 +29,11 @@ Delete all exchanges
 
 ./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list queues name | while read line; do if [[ "$line" == devEAST_* ]]; then ./rabbitmqadmin --username=guest --password=guest -q delete queue name=${line}; else echo "NO - $line"; fi; done
 
+
+
+
+
+./rabbitmqadmin -V / --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list queues name | while read line; do if [[ "$line" == devEAST_* ]]; then 
+
+
+vhost name node messages message_stats.publish_details.rate
