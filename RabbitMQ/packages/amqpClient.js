@@ -113,7 +113,8 @@ module.exports = (function(){
 				connection.on('error', function(err) {
 					// Setting the amqp connected flag to false since the connection terminated
 					amqpConnected = false;
-					logger.error('amqpClient: setup: AMQP ERROR', err);	
+					var errMsg = err && err.stack ? err.stack.split('\n') : err;
+					logger.error('amqpClient: setup: AMQP ERROR', errMsg);	
 					emitter.emit(eventNames.error, err);
 				});
 				
@@ -236,7 +237,7 @@ module.exports = (function(){
 		// publish to main exchange/main queue
 		exchanges.mainExchange.publish(queues.mainQueue.name, new Buffer(encodedPayload), {
 			mandatory: true
-			, ack: true
+			//, ack: true
 			, deliveryMode: 2 // persistent
 		}, function publishCallback(hasError){
 			if (hasError){
@@ -250,339 +251,368 @@ module.exports = (function(){
 		logger.info('amqpClient: initMainQueue [' + keys.mainQueueKey + '] on exchange [' + keys.mainExchangeKey + ']');
 		checkConnection('initMainQueue');
 
-		if (!exchanges.mainExchange && !queues.mainQueue){
+		var onBindMainQueue = function(result) {
+			logger.info('amqpClient: initMainQueue: onBindMainQueue [' + queues.mainQueue.name + '] ready');
+			// return exchange and queue to callback
+			if (callback){
+				callback({
+					mainExchange: exchanges.mainExchange,
+					mainQueue: queues.mainQueue
+				});
+			}
+		};
 
-			var onBindMainQueue = function(result) {
-				logger.info('amqpClient: initMainQueue: onBindMainQueue [' + queues.mainQueue.name + '] ready');
-				// return exchange and queue to callback
-				if (callback){
-					callback({
-						mainExchange: exchanges.mainExchange,
-						mainQueue: queues.mainQueue
-					});
+		var onAssertMainQueue = function(result) {
+			logger.info('amqpClient: initMainQueue: onAssertMainQueue [' + result.name + '] ready');
+			queues.mainQueue = result;
+			// bind to queue
+			bindQueueToExchange(queues.mainQueue, keys.mainExchangeKey, onBindMainQueue);
+		};
+
+		var onAssertMainExchange = function(result) {
+			logger.info('amqpClient: initMainQueue: onAssertMainExchange [' + result.name + '] ready');
+			exchanges.mainExchange = result;
+
+			// assert queue
+			assertQueue(keys.mainQueueKey
+				, {
+					durable: true
+					, exclusive: false
+					, autoDelete: false
+					, confirm: true
 				}
-			};
+				, onAssertMainQueue);
+		};
 
-			var onAssertMainQueue = function(result) {
-				logger.info('amqpClient: initMainQueue: onAssertMainQueue [' + result.name + '] ready');
-				queues.mainQueue = result;
-				// bind to queue
-				bindQueueToExchange(queues.mainQueue, keys.mainExchangeKey, onBindMainQueue);
-			};
-
-			var onAssertMainExchange = function(result) {
-				logger.info('amqpClient: initMainQueue: onAssertMainExchange [' + result.name + '] ready');
-				exchanges.mainExchange = result;
-
-				// assert queue
-				assertQueue(keys.mainQueueKey
-					, {
-						durable: true
-						, exclusive: false
-						, autoDelete: false
-						, confirm: true
-					}
-					, onAssertMainQueue);
-			};
-
-			// assert exchange
-			assertExchange(keys.mainExchangeKey, {
-				type: 'fanout'
-				, durable: true
-				, autoDelete: false
-				, confirm: true
-			}, onAssertMainExchange);
-		} else {
-			logger.info('initMainQueue [' + keys.mainQueueKey + '] exists already.');
-			callback(queues.mainQueue);
-		}
+		// assert exchange
+		assertExchange(keys.mainExchangeKey, {
+			type: 'fanout'
+			, durable: true
+			, autoDelete: false
+			, confirm: true
+		}, onAssertMainExchange);
 	};
 
 	var initReplyQueue = function(callback){
 		logger.info('amqpClient: initReplyQueue [' + keys.replyQueueKey + '] on exchange [' + keys.mainExchangeKey + ']');
 		checkConnection('initReplyQueue');
 
-		if (!exchanges.mainExchange && !queues.replyQueue){
+		var onBindReplyQueue = function(result) {
+			logger.info('amqpClient: initReplyQueue: onBindReplyQueue [' + queues.replyQueue.name + '] ready');
+			// return exchange and queue to callback
+			if (callback){
+				callback({
+					mainExchange: exchanges.mainExchange,
+					replyQueue: queues.replyQueue
+				});
+			}
+		};
 
-			var onBindReplyQueue = function(result) {
-				logger.info('amqpClient: initReplyQueue: onBindReplyQueue [' + queues.replyQueue.name + '] ready');
-				// return exchange and queue to callback
-				if (callback){
-					callback({
-						mainExchange: exchanges.mainExchange,
-						replyQueue: queues.replyQueue
-					});
+		var onAssertReplyQueue = function(result) {
+			logger.info('amqpClient: initReplyQueue: onAssertReplyQueue [' + result.name + '] ready');
+			queues.replyQueue = result;
+			// bind to queue
+			bindQueueToExchange(queues.replyQueue, keys.mainExchangeKey, onBindReplyQueue);
+		};
+
+		var onAssertMainExchange = function(result) {
+			logger.info('amqpClient: initReplyQueue: onAssertMainExchange [' + result.name + '] ready');
+			exchanges.mainExchange = result;
+
+			// assert queue
+			assertQueue(keys.replyQueueKey
+				, {
+					durable: true
+					, exclusive: false
+					, autoDelete: false
+					, confirm: true
 				}
-			};
+				, onAssertReplyQueue);
+		};
 
-			var onAssertReplyQueue = function(result) {
-				logger.info('amqpClient: initReplyQueue: onAssertReplyQueue [' + result.name + '] ready');
-				queues.replyQueue = result;
-				// bind to queue
-				bindQueueToExchange(queues.replyQueue, keys.mainExchangeKey, onBindReplyQueue);
-			};
-
-			var onAssertMainExchange = function(result) {
-				logger.info('amqpClient: initReplyQueue: onAssertMainExchange [' + result.name + '] ready');
-				exchanges.mainExchange = result;
-
-				// assert queue
-				assertQueue(keys.replyQueueKey
-					, {
-						durable: true
-						, exclusive: false
-						, autoDelete: false
-						, confirm: true
-					}
-					, onAssertReplyQueue);
-			};
-
-			// assert exchange
-			assertExchange(keys.mainExchangeKey, {
-				type: 'fanout'
-				, durable: true
-				, autoDelete: false
-				, confirm: true
-			}, onAssertMainExchange);
-		} else {
-			logger.info('initReplyQueue [' + keys.replyQueueKey + '] exists already');
-			callback(queues.replyQueue);
-		}
+		// assert exchange
+		assertExchange(keys.mainExchangeKey, {
+			type: 'fanout'
+			, durable: true
+			, autoDelete: false
+			, confirm: true
+		}, onAssertMainExchange);
 	};
 
 	var initWaitQueue = function(callback){
 		logger.info('amqpClient: initWaitQueue [' + keys.waitQueueKey + '] on exchange [' + keys.deadletterExchangeKey + ']');
 		checkConnection('initWaitQueue');
 
-		if (!exchanges.deadletterExchange && !queues.waitQueue){
+		var onBindWaitQueue = function(){
+			logger.info('amqpClient: initWaitQueue: onBindWaitQueue [' + queues.waitQueue.name + '] ready');
+			// return exchange and queue to callback
+			if (callback){
+				callback({
+					deadletterExchange: exchanges.deadletterExchange,
+					waitQueue: queues.waitQueue
+				});
+			}
+		};
 
-			var onBindWaitQueue = function(){
-				logger.info('amqpClient: initWaitQueue: onBindWaitQueue [' + queues.waitQueue.name + '] ready');
-				// return exchange and queue to callback
-				if (callback){
+		var onAssertWaitQueue = function(result){
+			logger.info('amqpClient: initWaitQueue: onAssertWaitQueue [' + result.name + ']: ready');
+			queues.waitQueue = result;
+			bindQueueToExchange(queues.waitQueue, keys.deadletterExchangeKey, onBindWaitQueue);
+		};
+
+		var onAssertDeadletterExchange = function(result) {
+			logger.info('amqpClient: initWaitQueue: onAssertDeadletterExchange [' + result.name + ']');
+			exchanges.deadletterExchange = result;
+			
+			if (!amqpConfig.deadletterTTL || isNaN(amqpConfig.deadletterTTL)){
+				throw new Error('amqpClient: ERROR. Please add deadletterTTL value to amqpConfig section');
+			}
+
+			// assert queue
+			assertQueue(keys.waitQueueKey
+				, {
+					durable: true
+					, exclusive: false
+					, autoDelete: false
+					, arguments: {
+					 	"x-dead-letter-exchange": keys.mainExchangeKey // exchange to which the message will be re-published
+					 	, "x-message-ttl": amqpConfig.deadletterTTL  // message delay
+					 	////, "x-expires": 10000     // expire the whole queue after 10 seconds
+					 	, "x-dead-letter-key": keys.mainQueueKey // queue to which the message will be re-published
+					}
+				}
+				, onAssertWaitQueue);
+		};
+
+		// assert exchange
+		assertExchange(keys.deadletterExchangeKey, {
+			type: 'fanout'
+			, durable: true
+			, autoDelete: false
+			, confirm: true
+		}, onAssertDeadletterExchange);
+	};
+
+	var initJobQueues = function(numJobQueues, callback){
+		logger.info('amqpClient: initJobQueues on exchange [' + keys.jobExchangeKey + '] numJobQueues ' + numJobQueues);
+		checkConnection('initJobQueues');
+
+		var setupJobQueues = function(){
+			logger.info('amqpClient: initJobQueues: numJobQueues:', numJobQueues);
+
+			var queuesCount = 0;
+			var onBindJobQueue = function (jobQueue){
+				//logger.info('amqpClient: onBindJobQueue: result:', jobQueue.name);
+				queuesCount++;
+
+				if (queuesCount != numJobQueues){
+					return;
+				} else {
+					// when all job queues are ready, callback
+					logger.info('amqpClient: onBindJobQueue: all ' + queuesCount + ' job queues ready.', typeof callback);
 					callback({
-						deadletterExchange: exchanges.deadletterExchange,
-						waitQueue: queues.waitQueue
+						jobExchange: exchanges.jobExchange
 					});
 				}
 			};
 
-			var onAssertWaitQueue = function(result){
-				logger.info('amqpClient: initWaitQueue: onAssertWaitQueue [' + result.name + ']: ready');
-				queues.waitQueue = result;
-				bindQueueToExchange(queues.waitQueue, keys.deadletterExchangeKey, onBindWaitQueue);
+			var onAssertJobQueue = function(jobQueue) {
+				//logger.info('amqpClient: onAssertJobQueue:', jobQueue.name);
+				queues.jobQueues.push(jobQueue);
+				// bind to queue
+				bindQueueToExchange(jobQueue, keys.jobExchangeKey, onBindJobQueue);				
 			};
 
-			var onAssertDeadletterExchange = function(result) {
-				logger.info('amqpClient: initWaitQueue: onAssertDeadletterExchange [' + result.name + ']');
-				exchanges.deadletterExchange = result;
-				
-				if (!amqpConfig.deadletterTTL || isNaN(amqpConfig.deadletterTTL)){
-					throw new Error('amqpClient: ERROR. Please add deadletterTTL value to amqpConfig section');
-				}
-
-				// assert queue
-				assertQueue(keys.waitQueueKey
-					, {
+			for (var i = 0; i < numJobQueues; i++) {
+				// The queue name is the combination of prefix (develop, stage or production),
+				// 'job_queue' fixed string and the number of job queues.
+				var jobQueueKey = keys.jobQueueKeyPrefix + i;
+				assertQueue(jobQueueKey, 
+					{
 						durable: true
 						, exclusive: false
 						, autoDelete: false
-						, arguments: {
-						 	"x-dead-letter-exchange": keys.mainExchangeKey // exchange to which the message will be re-published
-						 	, "x-message-ttl": amqpConfig.deadletterTTL  // message delay
-						 	////, "x-expires": 10000     // expire the whole queue after 10 seconds
-						 	, "x-dead-letter-key": keys.mainQueueKey // queue to which the message will be re-published
-						}
-					}
-					, onAssertWaitQueue);
-			};
+					},
+					onAssertJobQueue);
+			}
+		};
 
-			// assert exchange
-			assertExchange(keys.deadletterExchangeKey, {
-				type: 'fanout'
-				, durable: true
-				, autoDelete: false
-				, confirm: true
-			}, onAssertDeadletterExchange);
-		}
+		var onAssertJobExchange = function(result) {
+			logger.info('amqpClient: initJobQueues: onAssertJobExchange [' + result.name + ']');
+			exchanges.jobExchange = result;
+			setupJobQueues();
+		};
+
+		// assert job exchange
+		assertExchange(keys.jobExchangeKey, {
+			type: 'topic'
+			, durable: true
+			, autoDelete: false
+			, confirm: true
+		}, onAssertJobExchange);
 	};
 
-	var initJobQueues = function(numJobQueues, jobQueuesConsumeCallback, callback){
-		logger.info('amqpClient: initJobQueues on exchange [' + keys.jobExchangeKey + '] numJobQueues ' + numJobQueues);
-		checkConnection('initJobQueues');
+	var consumeJobQueues = function(numJobQueues, jobQueuesConsumeCallback, callback){
+		logger.info('amqpClient: consumeJobQueues on exchange [' + keys.jobExchangeKey + '] numJobQueues ' + numJobQueues);
+		checkConnection('consumeJobQueues');
 
-		if (!exchanges.jobExchange){
+		var setupJobQueues = function(){
+			logger.info('amqpClient: consumeJobQueues: numJobQueues:', numJobQueues);
 
-			var setupJobQueues = function(){
-				logger.info('amqpClient: initJobQueues: numJobQueues:', numJobQueues);
+			var queuesCount = 0;
+			var onJobQueueReady = function (jobQueue){
+				//logger.info('amqpClient: onJobQueueReady: result:', jobQueue.name);
+				queuesCount++;
 
-				var queuesCount = 0;
-				var onBindJobQueue = function (jobQueue){
-					//logger.info('amqpClient: onBindJobQueue: result:', jobQueue.name);
-					queuesCount++;
-
-					// if a function to consume the job queue has been passed
-					// subscribe to the queue with that
-					if (jobQueuesConsumeCallback){
-						// subscribe to queue
-						//logger.info('amqpClient: onBindJobQueue: subscribe to: ', jobQueue.name);
-						jobQueue.subscribe({
-								ack: true
-								, prefetchCount: 1
-							},
-							jobQueuesConsumeCallback);
-					}
-
-					if (queuesCount != numJobQueues){
-						return;
-					} else {
-						// when all job queues are ready, callback
-						logger.info('amqpClient: onBindJobQueue: all ' + queuesCount + ' job queues ready.', typeof callback);
-						callback({
-							jobExchange: exchanges.jobExchange
-						});
-					}
-				};
-
-				var onAssertJobQueue = function(jobQueue) {
-					//logger.info('amqpClient: onAssertJobQueue:', jobQueue.name);
-					queues.jobQueues.push(jobQueue);
-					// bind to queue
-					bindQueueToExchange(jobQueue, keys.jobExchangeKey, onBindJobQueue);				
-				};
-
-				for (var i = 0; i < numJobQueues; i++) {
-					// The queue name is the combination of prefix (develop, stage or production),
-					// 'job_queue' fixed string and the number of job queues.
-					var jobQueueKey = keys.jobQueueKeyPrefix + i;
-					assertQueue(jobQueueKey, 
-						{
-							durable: true
-							, exclusive: false
-							, autoDelete: false
+				// if a function to consume the job queue has been passed
+				// subscribe to the queue with that
+				if (typeof jobQueuesConsumeCallback == 'function'){
+					// subscribe to queue
+					logger.info('amqpClient: consumeJobQueues: onJobQueueReady: subscribe to:', jobQueue.name);
+					jobQueue.subscribe({
+							ack: true
+							, prefetchCount: 1
 						},
-						onAssertJobQueue);
+						jobQueuesConsumeCallback);
+				}
+
+				if (queuesCount != numJobQueues){
+					return;
+				} else {
+					// when all job queues are ready, callback
+					logger.info('amqpClient: onJobQueueReady: all ' + queuesCount + ' job queues ready.', typeof callback);
+					callback({
+						jobExchange: exchanges.jobExchange
+					});
 				}
 			};
 
-			var onAssertJobExchange = function(result) {
-				logger.info('amqpClient: initJobQueues: onAssertJobExchange [' + result.name + ']');
-				exchanges.jobExchange = result;
-				setupJobQueues();
+			var onAssertJobQueue = function(jobQueue) {
+				//logger.info('amqpClient: onAssertJobQueue:', jobQueue.name);
+				queues.jobQueues.push(jobQueue);
+				// bind to queue
+				bindQueueToExchange(jobQueue, keys.jobExchangeKey, onJobQueueReady);				
 			};
 
-			// assert job exchange
-			assertExchange(keys.jobExchangeKey, {
-				type: 'topic'
-				, durable: true
-				, autoDelete: false
-				, confirm: true
-			}, onAssertJobExchange);
-		}
+			for (var i = 0; i < numJobQueues; i++) {
+				// The queue name is the combination of prefix (develop, stage or production),
+				// 'job_queue' fixed string and the number of job queues.
+				var jobQueueKey = keys.jobQueueKeyPrefix + i;
+				assertQueue(jobQueueKey, 
+					{
+						durable: true
+						, exclusive: false
+						, autoDelete: false
+					},
+					onAssertJobQueue);
+			}
+		};
+
+		var onAssertJobExchange = function(result) {
+			logger.info('amqpClient: initJobQueues: onAssertJobExchange [' + result.name + ']');
+			exchanges.jobExchange = result;
+			setupJobQueues();
+		};
+
+		// assert job exchange
+		assertExchange(keys.jobExchangeKey, {
+			type: 'topic'
+			, durable: true
+			, autoDelete: false
+			, confirm: true
+		}, onAssertJobExchange);
 	};
 	
 	var initFeederControlQueue = function(callback){
 		logger.info('amqpClient: initFeederControlQueue [' + keys.feederControlQueueKey + '] on exchange [' + keys.mainExchangeKey + ']');
 		checkConnection('initFeederControlQueue');
 
-		if (!exchanges.mainExchange && !queues.feederControlQueue){
+		var onBindFeederControlQueue = function(result) {
+			logger.info('amqpClient: initFeederControlQueue: onBindFeederControlQueue [' + queues.feederControlQueue.name + '] ready');
+			// return exchange and queue to callback
+			if (callback){
+				callback({
+					mainExchange: exchanges.mainExchange,
+					feederControlQueue: queues.feederControlQueue
+				});
+			}
+		};
 
-			var onBindFeederControlQueue = function(result) {
-				logger.info('amqpClient: initFeederControlQueue: onBindFeederControlQueue [' + queues.feederControlQueue.name + '] ready');
-				// return exchange and queue to callback
-				if (callback){
-					callback({
-						mainExchange: exchanges.mainExchange,
-						feederControlQueue: queues.feederControlQueue
-					});
+		var onAssertFeederControlQueue = function(result) {
+			logger.info('amqpClient: initFeederControlQueue: onAssertFeederControlQueue [' + result.name + '] ready');
+			queues.feederControlQueue = result;
+			// bind to queue
+			bindQueueToExchange(queues.feederControlQueue, keys.mainExchangeKey, onBindFeederControlQueue);
+		};
+
+		var onAssertMainExchange = function(result) {
+			logger.info('amqpClient: initFeederControlQueue: onAssertMainExchange [' + result.name + '] ready');
+			exchanges.mainExchange = result;
+
+			// assert queue
+			assertQueue(keys.feederControlQueueKey
+				, {
+					durable: true
+					, exclusive: false
+					, autoDelete: false
+					, confirm: true
 				}
-			};
+				, onAssertFeederControlQueue);
+		};
 
-			var onAssertFeederControlQueue = function(result) {
-				logger.info('amqpClient: initFeederControlQueue: onAssertFeederControlQueue [' + result.name + '] ready');
-				queues.feederControlQueue = result;
-				// bind to queue
-				bindQueueToExchange(queues.feederControlQueue, keys.mainExchangeKey, onBindFeederControlQueue);
-			};
-
-			var onAssertMainExchange = function(result) {
-				logger.info('amqpClient: initFeederControlQueue: onAssertMainExchange [' + result.name + '] ready');
-				exchanges.mainExchange = result;
-
-				// assert queue
-				assertQueue(keys.feederControlQueueKey
-					, {
-						durable: true
-						, exclusive: false
-						, autoDelete: false
-						, confirm: true
-					}
-					, onAssertFeederControlQueue);
-			};
-
-			// assert exchange
-			assertExchange(keys.mainExchangeKey, {
-				type: 'fanout'
-				, durable: true
-				, autoDelete: false
-				, confirm: true
-			}, onAssertMainExchange);
-		} else {
-			logger.info('initFeederControlQueue [' + keys.feederControlQueueKey + '] exists already');
-			callback(queues.feederControlQueue);
-		}
+		// assert exchange
+		assertExchange(keys.mainExchangeKey, {
+			type: 'fanout'
+			, durable: true
+			, autoDelete: false
+			, confirm: true
+		}, onAssertMainExchange);
 	};
 	
 	var initFeederControlReplyQueue = function(callback){
 		logger.info('amqpClient: initFeederControlReplyQueue [' + keys.feederControlReplyQueueKey + '] on exchange [' + keys.mainExchangeKey + ']');
 		checkConnection('initFeederControlReplyQueue');
 
-		if (!exchanges.mainExchange && !queues.feederControlReplyQueue){
+		var onBindFeederControlReplyQueue = function(result) {
+			logger.info('amqpClient: initFeederControlReplyQueue: onBindFeederControlReplyQueue [' + queues.feederControlReplyQueue.name + '] ready');
+			// return exchange and queue to callback
+			if (callback){
+				callback({
+					mainExchange: exchanges.mainExchange,
+					feederControlReplyQueue: queues.feederControlReplyQueue
+				});
+			}
+		};
 
-			var onBindFeederControlReplyQueue = function(result) {
-				logger.info('amqpClient: initFeederControlReplyQueue: onBindFeederControlReplyQueue [' + queues.feederControlReplyQueue.name + '] ready');
-				// return exchange and queue to callback
-				if (callback){
-					callback({
-						mainExchange: exchanges.mainExchange,
-						feederControlReplyQueue: queues.feederControlReplyQueue
-					});
+		var onAssertFeederControlReplyQueue = function(result) {
+			logger.info('amqpClient: initFeederControlReplyQueue: onAssertFeederControlReplyQueue [' + result.name + '] ready');
+			queues.feederControlReplyQueue = result;
+			// bind to queue
+			bindQueueToExchange(queues.feederControlReplyQueue, keys.mainExchangeKey, onBindFeederControlReplyQueue);
+		};
+
+		var onAssertMainExchange = function(result) {
+			logger.info('amqpClient: initFeederControlReplyQueue: onAssertMainExchange [' + result.name + '] ready');
+			exchanges.mainExchange = result;
+
+			// assert queue
+			assertQueue(keys.feederControlReplyQueueKey
+				, {
+					durable: true
+					, exclusive: false
+					, autoDelete: false
+					, confirm: true
 				}
-			};
+				, onAssertFeederControlReplyQueue);
+		};
 
-			var onAssertFeederControlReplyQueue = function(result) {
-				logger.info('amqpClient: initFeederControlReplyQueue: onAssertFeederControlReplyQueue [' + result.name + '] ready');
-				queues.feederControlReplyQueue = result;
-				// bind to queue
-				bindQueueToExchange(queues.feederControlReplyQueue, keys.mainExchangeKey, onBindFeederControlReplyQueue);
-			};
-
-			var onAssertMainExchange = function(result) {
-				logger.info('amqpClient: initFeederControlReplyQueue: onAssertMainExchange [' + result.name + '] ready');
-				exchanges.mainExchange = result;
-
-				// assert queue
-				assertQueue(keys.feederControlReplyQueueKey
-					, {
-						durable: true
-						, exclusive: false
-						, autoDelete: false
-						, confirm: true
-					}
-					, onAssertFeederControlReplyQueue);
-			};
-
-			// assert exchange
-			assertExchange(keys.mainExchangeKey, {
-				type: 'fanout'
-				, durable: true
-				, autoDelete: false
-				, confirm: true
-			}, onAssertMainExchange);
-		} else {
-			logger.info('initFeederControlReplyQueue [' + keys.feederControlReplyQueueKey + '] exists already');
-			callback(queues.feederControlReplyQueue);
-		}
+		// assert exchange
+		assertExchange(keys.mainExchangeKey, {
+			type: 'fanout'
+			, durable: true
+			, autoDelete: false
+			, confirm: true
+		}, onAssertMainExchange);
 	};
 
 	/**
@@ -624,6 +654,7 @@ module.exports = (function(){
 				initReplyQueue: initReplyQueue,
 				initWaitQueue: 	initWaitQueue,
 				initJobQueues:  initJobQueues,
+				consumeJobQueues: 	consumeJobQueues,
 				publishToMainQueue: 	publishToMainQueue,
 				initFeederControlQueue: initFeederControlQueue,
 				initFeederControlReplyQueue: initFeederControlReplyQueue

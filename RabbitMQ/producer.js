@@ -39,7 +39,7 @@ var onInitMainQueueReady = function(result){
 };
 
 
-var PUBLISH_RATE = 100 //every 6 seconds
+var PUBLISH_RATE = 1 //every 6 seconds
   , count        = 1;
 // just a simple publish routine to simulate messages published to the queue
 var publishRoutine = function(){

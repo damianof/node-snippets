@@ -24,7 +24,7 @@
 // 	//var conn = amqpClient.connection;
 // 	logger.cyan('onRabbitConnected');
 
-// 	amqpClient.initJobQueues(conf.numJobQueues, null, onInitJobQueuesReady);
+// 	amqpClient.initJobQueues(conf.numJobQueues, onInitJobQueuesReady);
 // };
 
 // logger.cyan('listening to even: ' + eventNames.connected);

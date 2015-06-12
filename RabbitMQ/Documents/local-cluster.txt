@@ -1,0 +1,16 @@
+sudo RABBITMQ_NODE_PORT=5672 RABBITMQ_SERVER_START_ARGS="-rabbitmq_management listener [{port,15672}] -rabbitmq_stomp tcp_listeners [61613] -rabbitmq_mqtt tcp_listeners [1883]" RABBITMQ_NODENAME=rabbit@localhost ./rabbitmq-server -detached
+
+sudo RABBITMQ_NODE_PORT=5673 RABBITMQ_SERVER_START_ARGS="-rabbitmq_management listener [{port,15673}] -rabbitmq_stomp tcp_listeners [61614] -rabbitmq_mqtt tcp_listeners [1884]" RABBITMQ_NODENAME=hare@localhost ./rabbitmq-server -detached
+
+sudo ./rabbitmqctl -n hare@localhost stop_app
+
+sudo ./rabbitmqctl -n hare@localhost join_cluster rabbit@localhost -s
+
+sudo ./rabbitmqctl -n hare@localhost start_app
+
+
+
+// to remove from cluster
+sudo ./rabbitmqctl -n hare@localhost stop_app
+sudo ./rabbitmqctl -n rabbit@localhost stop_app
+sudo ./rabbitmqctl -n hare@localhost forget_cluster_node rabbit@localhost --offline

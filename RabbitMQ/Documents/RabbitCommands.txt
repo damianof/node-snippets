@@ -5,15 +5,10 @@ List all queues with number of messages and current publish rate
 ./rabbitmqadmin -V / list queues vhost name node messages message_stats.publish_details.rate
 
 Delete all queues
-./rabbitmqadmin -f tsv -q list exchanges name | while read exchange; do ./rabbitmqadmin -q delete exchange name=${exchange}; done
+./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list queues name | while read line; do ./rabbitmqadmin --username=guest --password=guest -q delete queue name=${line}; done
 
 Delete all exchanges
-./rabbitmqadmin -f tsv -q list queues name | while read queue; do ./rabbitmqadmin -q delete queue name=${queue}; done
-
-
-./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list exchanges name | while read exchange; do ./rabbitmqadmin --username=guest --password=guest -q delete exchange name=${exchange}; done
-
-./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list queues name | while read queue; do ./rabbitmqadmin --username=guest --password=guest -q delete queue name=${queue}; done
+./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list exchanges name | while read line; do ./rabbitmqadmin --username=guest --password=guest -q delete exchange name=${line}; done
 
 
 
@@ -30,10 +25,12 @@ Delete all exchanges
 ./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list queues name | while read line; do if [[ "$line" == devEAST_* ]]; then ./rabbitmqadmin --username=guest --password=guest -q delete queue name=${line}; else echo "NO - $line"; fi; done
 
 
-
+./rabbitmqadmin -V / --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list queues name | while read line; do ./rabbitmqadmin --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr -q delete queue name=${line}; done
 
 
 ./rabbitmqadmin -V / --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list queues name | while read line; do if [[ "$line" == devEAST_* ]]; then 
 
 
-vhost name node messages message_stats.publish_details.rate
+./rabbitmqadmin -V / --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list exchanges name | while read line; do ./rabbitmqadmin --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr -q delete exchange name=${line}; done
+
+

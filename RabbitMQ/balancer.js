@@ -22,7 +22,7 @@ var onAmqpClientConnected = function() {
 
 	// on amqpClient connected,
 	// initialize job queues
-	amqpClient.initJobQueues(conf.numJobQueues, null, onInitJobQueuesReady);
+	amqpClient.initJobQueues(conf.numJobQueues, onInitJobQueuesReady);
 };
 
 // start listening to amqpClient events

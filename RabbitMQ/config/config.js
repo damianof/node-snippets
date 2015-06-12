@@ -48,6 +48,6 @@ module.exports = {
 	sfcode:"uat-cert",
 	defaults: {
 		appName: 'RabbitMQSandbox',
-		numJobQueues: 4
+		numJobQueues: 8
 	}
 };

@@ -43,16 +43,16 @@ var onInitWaitQueueReady = function(result){
 		throw new Error(errMsg);
 	}
 
-	amqpClient.initJobQueues(conf.numJobQueues, onConsumeJobQueues, onInitJobQueuesReady);
+	amqpClient.consumeJobQueues(conf.numJobQueues, onConsumeJobQueues, onJobQueuesReady);
 };
 
 // callback called by amqpClient once all the job queues are ready
-var onInitJobQueuesReady = function(result){
-	logger.cyan('onInitJobQueuesReady');
+var onJobQueuesReady = function(result){
+	logger.cyan('onJobQueuesReady');
 	amqpJobExchange = result.jobExchange;
 
 	if (amqpJobExchange == undefined){
-		var errMsg = 'onInitJobQueuesReady: amqpJobExchange is undefined';
+		var errMsg = 'onJobQueuesReady: amqpJobExchange is undefined';
 		logger.error(errMsg);
 		throw new Error(errMsg);
 	}
@@ -66,32 +66,34 @@ var onConsumeJobQueues = function(msg, headers, deliveryInfo, amqpMessageObject)
 	 	: null;
 	
 	if (!msgStr){
+		logger.error('onConsumeMainQueue ERROR: message is null', msg.data);
 		throw new Error('message is null');
-	}
-	logger.warn('onConsumeMainQueue msgStr', msgStr);
+	} else {
+		logger.info('onConsumeMainQueue msgStr', msgStr);
 
-	var msgObj = JSON.parse(msgStr);
-	// dont delete this, we might use routingKey for other logic
-	//var jobQueueKey = amqpMessageObject.routingKey; // message routing key
+		var msgObj = JSON.parse(msgStr);
+		// dont delete this, we might use routingKey for other logic
+		//var jobQueueKey = amqpMessageObject.routingKey; // message routing key
 
-	// randomly either pseudo-process message by just aknowledging it
-	// or sent back to dead letter excahnge
-	if (Math.random() > 0.5){
-		// pseudo-process message (just ackn for now)
-		amqpMessageObject.acknowledge(false);
-	}
-	else {
-		// send to dead letter exchange
-		msgObj.DEADLETTER_ROUTED = true;
-
-		amqpDeadletterExchange.publish(amqpWaitQueueKey, new Buffer(JSON.stringify(msgObj)), {
-			durable: true
-		}, function(hasError){
-			if (hasError){
-				logger.error('-------- deadletter publish callback -------- hasError:', hasError);
-			}
+		// randomly either pseudo-process message by just aknowledging it
+		// or sent back to dead letter excahnge
+		if (Math.random() > 0.5){
+			// pseudo-process message (just ackn for now)
 			amqpMessageObject.acknowledge(false);
-		});
+		}
+		else {
+			// send to dead letter exchange
+			msgObj.DEADLETTER_ROUTED = true;
+
+			amqpDeadletterExchange.publish(amqpWaitQueueKey, new Buffer(JSON.stringify(msgObj)), {
+				durable: true
+			}, function(hasError){
+				if (hasError){
+					logger.error('-------- deadletter publish callback -------- hasError:', hasError);
+				}
+				amqpMessageObject.acknowledge(false);
+			});
+		}
 	}
 };
 
