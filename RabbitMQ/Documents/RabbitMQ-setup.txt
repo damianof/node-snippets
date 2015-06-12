@@ -1,0 +1,9 @@
+
+
+
+sudo ./rabbitmq-plugins enable rabbitmq_management
+
+restart rabbit
+
+wget http://localhost:15672/cli/rabbitmqadmin
+

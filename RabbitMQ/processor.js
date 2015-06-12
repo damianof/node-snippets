@@ -77,23 +77,23 @@ var onConsumeJobQueues = function(msg, headers, deliveryInfo, amqpMessageObject)
 
 		// randomly either pseudo-process message by just aknowledging it
 		// or sent back to dead letter excahnge
-		if (Math.random() > 0.5){
+		//if (Math.random() > 0.5){
 			// pseudo-process message (just ackn for now)
 			amqpMessageObject.acknowledge(false);
-		}
-		else {
-			// send to dead letter exchange
-			msgObj.DEADLETTER_ROUTED = true;
+		// }
+		// else {
+		// 	// send to dead letter exchange
+		// 	msgObj.DEADLETTER_ROUTED = true;
 
-			amqpDeadletterExchange.publish(amqpWaitQueueKey, new Buffer(JSON.stringify(msgObj)), {
-				durable: true
-			}, function(hasError){
-				if (hasError){
-					logger.error('-------- deadletter publish callback -------- hasError:', hasError);
-				}
-				amqpMessageObject.acknowledge(false);
-			});
-		}
+		// 	amqpDeadletterExchange.publish(amqpWaitQueueKey, new Buffer(JSON.stringify(msgObj)), {
+		// 		durable: true
+		// 	}, function(hasError){
+		// 		if (hasError){
+		// 			logger.error('-------- deadletter publish callback -------- hasError:', hasError);
+		// 		}
+		// 		amqpMessageObject.acknowledge(false);
+		// 	});
+		// }
 	}
 };
 

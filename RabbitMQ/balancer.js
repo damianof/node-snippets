@@ -45,8 +45,8 @@ var onInitMainQueueReady = function(result){
 
 	// subscribe to main queue
 	amqpMainQueue.subscribe({
-			ack: true
-			, prefetchCount: 1
+			//ack: true,
+			prefetchCount: 5000
 		},
 		onConsumeMainQueue);
 };
@@ -63,7 +63,7 @@ var getRandomJobQueueKey = function(){
 
 // handler for queue subscribe. It will consume the queue messages as they come through.
 var onConsumeMainQueue = function(msg, headers, deliveryInfo, amqpMessageObject) {
-	//console.log('onConsumeMainQueue', msg);
+	//	console.log('onConsumeMainQueue');
 
 	// convert message to string
 	var message = msg.data 
@@ -75,6 +75,9 @@ var onConsumeMainQueue = function(msg, headers, deliveryInfo, amqpMessageObject)
 	}
 	//console.log('onConsumeMainQueue', message);
 
+	// aknowledge message
+	//amqpMessageObject.acknowledge(false);
+
 	// get random job queue
 	var msgObj = JSON.parse(message);
 	var jobQueueKey = getRandomJobQueueKey();
@@ -85,14 +88,10 @@ var onConsumeMainQueue = function(msg, headers, deliveryInfo, amqpMessageObject)
 			, ack: true
 			, deliveryMode: 2 // persistent
 	}, function publishCallback(hasError){
-		if (hasError){
-			logger.error('--- amqpJobExchange publish callback hasError:', hasError);
-		} else {
-			logger.info('onConsumeMainQueue: sent to job queue [' + jobQueueKey + ']', message);
-		}
-		
-		// aknowledge message
-		amqpMessageObject.acknowledge(false);
+		// if (hasError){
+		// 	logger.error('--- amqpJobExchange publish callback hasError:', hasError);
+		// }
+		//logger.info('onConsumeMainQueue: sent to job queue [' + jobQueueKey + ']', message);
 	});
 };
 
