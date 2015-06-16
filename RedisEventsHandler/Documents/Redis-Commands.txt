@@ -1,0 +1,4 @@
+
+
+./redis-cli -h localhost -a yourpassword
+
