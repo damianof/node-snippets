@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Dashboard</title>
+		<!-- Bootstrap -->
+		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+		<link href='http://fonts.googleapis.com/css?family=Lato:400,300,700,900' rel='stylesheet' type='text/css'>
+		<link href="/js/epoch.0.5.2.min.css" rel="stylesheet" />
+
+<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+	<script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+	<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+	</head>
+	<body>
+		<div id="wrap">
+
+			<div class="body-content">
+
+				<div class="container" >
+
+					<div class="row">
+						<div class="col-sm-4 col-lg-4">
+							<article class="widget">
+								<div class="widget-inner">
+									<header>
+										<h1>AMQP</h1>
+									</header>
+									<section class="widget-body" style="cursor:pointer">
+										<div id="rabbitQueue" class="epoch gauge-medium"></div>
+									</section>
+								</div>
+							</article>
+						</div><!-- end col -->
+
+						<div class="col-sm-4 col-lg-4">
+							<article class="widget">
+								<div class="widget-inner">
+									<header>
+										<h1>Database</h1>
+									</header>
+									<section class="widget-body" style="cursor:pointer">
+										<div id="redisKeys" class="epoch gauge-medium"></div>
+									</section>
+								</div>
+							</article>
+						</div><!-- end col -->
+
+						<div class="col-sm-4 col-lg-4">
+							<article class="widget">
+								<div class="widget-inner">
+									<header>
+										<h1>Other</h1>
+									</header>
+									<section class="widget-body" style="cursor:pointer">
+										<div id="other" class="epoch gauge-medium"></div>
+									</section>
+								</div>
+							</article>
+						</div><!-- end col -->
+
+					</div><!-- end row -->
+
+					<div class="row">
+						
+						<div class="col-sm-12 col-lg-12">
+							<article class="widget">
+								<div class="widget-inner">
+									<header>
+										<h1>Sessions</h1>
+									</header>
+									<section class="widget-body" style="cursor:pointer">
+										<div id="sessions" class="epoch" style="height: 200px;"></div>
+									</section>
+								</div>
+							</article>
+						</div><!-- end col -->
+
+					</div><!-- end row -->
+
+					<ul id="messages"></ul>
+				</div><!-- end container -->
+
+			</div><!-- end body-content -->
+
+		</div><!-- end wrap -->
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
+		<!-- Include all compiled plugins (below), or include individual files as needed --> 
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script> 
+		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+		<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+		<script src="/js/d3.min.js"></script>
+		<script src="/js/epoch.0.5.2.min.js"></script>
+		<script>
+			// get dom references and setup epoch/d3 charts
+			var nodeSessions = $('#sessions');
+			nodeSessions.on('click', function(){console.log('nodeSessions click');});
+
+			var sessions = nodeSessions.epoch( {
+				type: 'time.area', axes: ['left', 'bottom', 'right'],
+				data: [ { values: [ { time: Date.now()/1000, y: 0 } ] } ],
+			} );
+
+			var rabbitQueue = $( '#rabbitQueue' ).epoch( { type: 'time.gauge' } );
+			var redisKeys = $( '#redisKeys' ).epoch( { type: 'time.gauge' } );
+			var other = $( '#other' ).epoch( { type: 'time.gauge' } );
+			
+			// setup Socket.io listener
+			var socket = io();
+			// update dom elements/charts whenever a message is received by Socket.IO
+			socket.on('data message', function(msg){
+				//var str = JSON.stringify(msg);
+				//$('#messages').append($('<li>').text(str));
+
+				sessions.push( [ { time: Date.now()/1000, y: msg.sessions } ] );
+
+				rabbitQueue.update( msg.rabbitQueue / 100000 || 0 );
+				redisKeys.update( msg.redisKeys / 100000 || 0 );
+				other.update( msg.other / 100000 || 0 );
+			});
+		</script>
+	</body>
+</html>
