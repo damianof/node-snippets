@@ -33,7 +33,17 @@ Delete all exchanges
 
 ./rabbitmqadmin -V / --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list queues name | while read line; do if [[ "$line" == devEAST_* ]]; then 
 
+./rabbitmqadmin -P 15672 --username=guest --password=guest -f tsv -q list queues name | while read line; do ./rabbitmqadmin -P 15672 --username=guest --password=guest -q delete queue name=${line}; done
 
-./rabbitmqadmin -V / --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list exchanges name | while read line; do ./rabbitmqadmin --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr -q delete exchange name=${line}; done
+./rabbitmqadmin -P 15672 --username=guest --password=guest -f tsv -q list exchanges name | while read line; do ./rabbitmqadmin -P 15672 --username=guest --password=guest -q delete exchange name=${line}; done
+
+./rabbitmqadmin -P 15672 --username=test --password=test -f tsv -q list queues name | while read line; do ./rabbitmqadmin -P 15672 --username=test --password=test -q delete queue name=${line}; done
+
+./rabbitmqadmin -P 15672 --username=test --password=test -f tsv -q list exchanges name | while read line; do ./rabbitmqadmin -P 15672 --username=test --password=test -q delete exchange name=${line}; done
+
+
+./rabbitmqadmin -P 45674 --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list queues name | while read line; do ./rabbitmqadmin -P 45674 --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -q delete queue name=${line}; done
+
+./rabbitmqadmin -P 45674 --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -f tsv -q list exchanges name | while read line; do ./rabbitmqadmin -P 45674 --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr -q delete exchange name=${line}; done
 
 

@@ -9,8 +9,25 @@ sudo ./rabbitmqctl -n hare@localhost join_cluster rabbit@localhost -s
 sudo ./rabbitmqctl -n hare@localhost start_app
 
 
+// etc/rabbitmq/rabbitmq.config
+[
+	{rabbit, [
+		{
+			cluster_nodes, {[
+				'rabbit@localhost', 
+				'hare@localhost'
+			], ram}
+		}
+	]}
+].
+
+
 
 // to remove from cluster
 sudo ./rabbitmqctl -n hare@localhost stop_app
 sudo ./rabbitmqctl -n rabbit@localhost stop_app
 sudo ./rabbitmqctl -n hare@localhost forget_cluster_node rabbit@localhost --offline
+
+
+// EC2 cluster
+http://www.otips.me/posts/rabbitmq-server-cluster-installation-in-amazon-ec2.html
