@@ -34,6 +34,21 @@ sudo ./rabbitmqctl -n hare@localhost start_app
 // /etc/hostname file:
 hare
 
+// policies
+Policy: queue_size_limit
+Pattern	
+Apply to	all
+Definition	
+max-length-bytes:	1000000000
+Priority	1
+
+Policy: ha-all
+Pattern	
+Apply to	all
+Definition	
+ha-mode:	all
+Priority	1
+
 
 
 // to remove from cluster
