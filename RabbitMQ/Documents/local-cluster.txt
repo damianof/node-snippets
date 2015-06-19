@@ -22,6 +22,19 @@ sudo ./rabbitmqctl -n hare@localhost start_app
 ].
 
 
+// /etc/hosts file:
+127.0.0.1	localhost
+127.0.0.1 rabbit
+127.0.0.1 hare
+255.255.255.255	broadcasthost
+::1             localhost 
+::1             rabbit 
+::1             hare 
+
+// /etc/hostname file:
+hare
+
+
 
 // to remove from cluster
 sudo ./rabbitmqctl -n hare@localhost stop_app

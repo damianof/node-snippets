@@ -1,5 +1,5 @@
 
 ssh -i ~/.ssh/yourkey.pem -N ubuntu@99.99.99.99 -L 46379/10.0.1.30/6379
 
-./redis-cli -h localhost -a j9SVjk9FEWPyjCYxbMuhrCvU
 
+./redis-cli -h localhost -p 46379 -a j9SVjk9FEWPyjCYxbMuhrCvU
