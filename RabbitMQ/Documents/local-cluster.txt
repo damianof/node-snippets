@@ -1,61 +1,60 @@
-sudo RABBITMQ_NODE_PORT=5672 RABBITMQ_SERVER_START_ARGS="-rabbitmq_management listener [{port,15672}] -rabbitmq_stomp tcp_listeners [61613] -rabbitmq_mqtt tcp_listeners [1883]" RABBITMQ_NODENAME=rabbit@localhost ./rabbitmq-server -detached
-
-sudo RABBITMQ_NODE_PORT=5673 RABBITMQ_SERVER_START_ARGS="-rabbitmq_management listener [{port,15673}] -rabbitmq_stomp tcp_listeners [61614] -rabbitmq_mqtt tcp_listeners [1884]" RABBITMQ_NODENAME=hare@localhost ./rabbitmq-server -detached
-
-sudo ./rabbitmqctl -n hare@localhost stop_app
-
-sudo ./rabbitmqctl -n hare@localhost join_cluster rabbit@localhost -s
-
-sudo ./rabbitmqctl -n hare@localhost start_app
-
+Setting up a local RabbitMQ cluster on a single machine:
 
 // etc/rabbitmq/rabbitmq.config
-[
-	{rabbit, [
-		{
-			cluster_nodes, {[
-				'rabbit@localhost', 
-				'hare@localhost'
-			], ram}
-		}
-	]}
-].
-
+	[
+		{rabbit, [
+			{
+				cluster_nodes, {[
+					'rabbit@localhost', 
+					'hare@localhost'
+				], ram}
+			}
+		]}
+	].
 
 // /etc/hosts file:
-127.0.0.1	localhost
-127.0.0.1 rabbit
-127.0.0.1 hare
-255.255.255.255	broadcasthost
-::1             localhost 
-::1             rabbit 
-::1             hare 
+	127.0.0.1	localhost
+	127.0.0.1 rabbit
+	127.0.0.1 hare
+	255.255.255.255	broadcasthost
+	::1             localhost 
+	::1             rabbit 
+	::1             hare 
 
 // /etc/hostname file:
-hare
+	Hare
 
-// policies
-Policy: queue_size_limit
-Pattern	
-Apply to	all
-Definition	
-max-length-bytes:	1000000000
-Priority	1
+Terminal (you could also omit detached and start each instance in a different terminal window to better monitor it)
+	sudo RABBITMQ_NODE_PORT=5672 RABBITMQ_SERVER_START_ARGS="-rabbitmq_management listener [{port,15672}] -rabbitmq_stomp tcp_listeners [61613] -rabbitmq_mqtt tcp_listeners [1883]" RABBITMQ_NODENAME=rabbit@localhost ./rabbitmq-server -detached
 
-Policy: ha-all
-Pattern	
-Apply to	all
-Definition	
-ha-mode:	all
-Priority	1
+	sudo RABBITMQ_NODE_PORT=5673 RABBITMQ_SERVER_START_ARGS="-rabbitmq_management listener [{port,15673}] -rabbitmq_stomp tcp_listeners [61614] -rabbitmq_mqtt tcp_listeners [1884]" RABBITMQ_NODENAME=hare@localhost ./rabbitmq-server -detached
 
+	sudo ./rabbitmqctl -n hare@localhost stop_app
+
+	sudo ./rabbitmqctl -n hare@localhost join_cluster rabbit@localhost -s
+
+	sudo ./rabbitmqctl -n hare@localhost start_app
+
+// RabbitMQ policies (set through rabbitmq admin website at http://localhost:15672)
+	Policy: 		queue_size_limit
+	Pattern:		(leave blank)
+	Apply to:	all
+	Definition:
+	max-length-bytes:	1000000000
+	Priority:		1
+
+	Policy: 		ha-all
+	Pattern:		(leave blank)
+	Apply to:	all
+	Definition:	
+	ha-mode:	all
+	Priority:		1
 
 
 // to remove from cluster
-sudo ./rabbitmqctl -n hare@localhost stop_app
-sudo ./rabbitmqctl -n rabbit@localhost stop_app
-sudo ./rabbitmqctl -n hare@localhost forget_cluster_node rabbit@localhost --offline
+	sudo ./rabbitmqctl -n hare@localhost stop_app
+	sudo ./rabbitmqctl -n rabbit@localhost stop_app
+	sudo ./rabbitmqctl -n hare@localhost forget_cluster_node rabbit@localhost --offline
 
-
-// EC2 cluster
-http://www.otips.me/posts/rabbitmq-server-cluster-installation-in-amazon-ec2.html
+// EC2 cluster info
+	http://www.otips.me/posts/rabbitmq-server-cluster-installation-in-amazon-ec2.html
