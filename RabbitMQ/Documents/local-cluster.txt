@@ -48,7 +48,7 @@ Terminal (you could also omit detached and start each instance in a different te
 	Apply to:	all
 	Definition:	
 	ha-mode:	all
-	Priority:		1
+	Priority:		2
 
 
 // to remove from cluster
