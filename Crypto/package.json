@@ -1,0 +1,16 @@
+{
+  "name": "Crypto",
+  "description": "Testing encrypt/descrypt",
+  "version": "0.0.1",
+  "private": true,
+  "author": "Damiano Fusco",
+  "main": "./tests/cryptoUtils-tests.js",
+  "scripts": {
+    "start": "mocha ./tests/cryptoUtils-tests.js"
+  },
+  "dependencies": {
+    "mocha":      "2.1.0",
+    "chai":         "2.1.1",
+    "gulp":         "3.8.11"
+  }
+}
