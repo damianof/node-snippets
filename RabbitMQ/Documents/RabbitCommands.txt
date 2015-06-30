@@ -1,11 +1,11 @@
 Rabbit Commands
 
 
-List all exchanges with number of messages and current publish rate
-./rabbitmqadmin -V / --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr list exchanges vhost name node messages message_stats.publish_details.rate
-
 List all queues with number of messages and current publish rate
-./rabbitmqadmin -V / --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr list exchanges vhost name node messages message_stats.publish_details.rate
+./rabbitmqadmin -V / --username=test --password=ZbjGYa5tdaPaV3yTRtJeJYwr list queues vhost name node messages message_stats.publish_details.rate
+
+
+./rabbitmqadmin -P 45674 --username=guest --password=ZbjGYa5tdaPaV3yTRtJeJYwr list queues vhost name node messages message_stats.publish_details.rate
 
 Delete all queues
 ./rabbitmqadmin -V / --username=guest --password=guest -f tsv -q list queues name | while read line; do ./rabbitmqadmin --username=guest --password=guest -q delete queue name=${line}; done

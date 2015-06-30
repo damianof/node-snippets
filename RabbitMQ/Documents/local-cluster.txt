@@ -45,10 +45,12 @@ Terminal (you could also omit detached and start each instance in a different te
 
 	Policy: 		ha-all
 	Pattern:		(leave blank)
-	Apply to:	all
+	Apply to:		all
 	Definition:	
-	ha-mode:	all
-	Priority:		2
+	ha-mode:		exactly
+	ha-params:		2 			// this number should match the number of nodes in the cluster. So if you have 3 nodes, this should be 3 here.
+	ha-sync-mode:	automatic
+	Priority:		2 			// if you have multiple policies, it's important that this number is not the same as an existing one.
 
 
 // to remove from cluster
