@@ -18,17 +18,22 @@ describe('cryptoUtils tests', function(){
 		it('should successfully decrypt data', function(done){
 
 			var data = 'here is my data to encrypt asd asd asd asd asd asdasdasdas'
-				, password = 'pwd1$';
+				//, password = 'pwd1$'
+				;
+			var password = '3zTvzr3p67VC61jmV54rIYu1545x4TlY',
+			  // do not use a global iv for production, 
+			  // generate a new one for each encryption
+			  iv = '60iP0h6vJoEa';
 
-			cryptoUtils.encrypt(data, password, function(encryptError, encryptResult){
+			cryptoUtils.encrypt(data, password, iv, function(encryptError, encryptResult){
 				console.log('encrypt encryptError', encryptError);
-				console.log('encrypt encryptResult', encryptResult.length, encryptResult);
+				console.log('encrypt encryptResult', encryptResult);
 
 				expect(encryptError).to.be.undefined;
 				expect(encryptResult).to.not.be.undefined;
 
 
-				cryptoUtils.decrypt(encryptResult, password, function(decryptError, decryptResult){
+				cryptoUtils.decrypt(encryptResult, password, iv, function(decryptError, decryptResult){
 					console.log('decrypt decryptError', decryptError);
 					console.log('decrypt decryptResult', decryptResult);
 
@@ -40,7 +45,7 @@ describe('cryptoUtils tests', function(){
 			});
 		});
 
-		it('should successfully hash data', function(done){
+		/*it('should successfully hash data', function(done){
 
 			var data = 'here is my data to hash asd asd asd asd asd asdasdasdas'
 				, password = 'pwd1$';
@@ -72,7 +77,7 @@ describe('cryptoUtils tests', function(){
 
 				done();
 			});
-		});
+		});*/
 	});
 });
 

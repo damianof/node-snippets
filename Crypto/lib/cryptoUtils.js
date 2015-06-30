@@ -16,13 +16,14 @@ var crypto = require('crypto');
 	* @description
 	* Method will encrypt a file with 'aes-256-ctr'.
 */
-var encrypt = function(data, key, cb){
+var encrypt = function(data, key, iv, cb){
 	try {
-		var algorithm = 'aes-256-ctr';
+		var algorithm = 'aes-256-gcm'; //aes-256-ctr';
 
-		var cipher = crypto.createCipher(algorithm, key);
+		var cipher = crypto.createCipheriv(algorithm, key, iv);
 		var result = cipher.update(data, 'utf8', 'hex');
 		result += cipher.final('hex');
+		var tag = cipher.getAuthTag();
 
 		console.log('encrypt completed');
 		
@@ -32,7 +33,10 @@ var encrypt = function(data, key, cb){
 			error = {error: 1, message: 'EMPTY AFTER ENCRYPT', statusCode: 0};
 		}
 
-		cb(error, result);
+		cb(error, {
+			content: result,
+			tag: tag
+		});
 
 	} catch(e) {
 		cb(e);
@@ -47,12 +51,13 @@ var encrypt = function(data, key, cb){
 	* @description
 	* Method will decrypt it a text file previously encrypted with 'aes-256-ctr'.
 */
-var decrypt = function(data, key, cb){
+var decrypt = function(encrypted, key, iv, cb){
 	try {
-		var algorithm = 'aes-256-ctr';
+		var algorithm = 'aes-256-gcm'; //aes-256-ctr';
 
-		var decipher = crypto.createDecipher(algorithm, key);
-		var result = decipher.update(data, 'hex', 'utf8');
+		var decipher = crypto.createDecipheriv(algorithm, key, iv);
+		decipher.setAuthTag(encrypted.tag);
+  		var result = decipher.update(encrypted.content, 'hex', 'utf8');
 		result += decipher.final('utf8');
 
 		var error;
