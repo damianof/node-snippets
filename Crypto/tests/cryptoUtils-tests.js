@@ -8,7 +8,7 @@
 /* eslint no-undef:0 */
 var chai = require('chai');
 var expect = chai.expect;
-var cryptoUtils = require('../lib/cryptoUtils.js');
+var cryptoUtils = require('../lib/cryptoUtils.js').getInstance();
 
 
 describe('cryptoUtils tests', function(){

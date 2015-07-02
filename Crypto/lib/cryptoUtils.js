@@ -7,25 +7,26 @@
 
 // get dependencies
 var crypto = require('crypto');
+var encryptAlgorithm = 'aes-256-gcm'
+	, hashAlgorithm = 'sha512'
+	, instance;
 
 /**
 	* @method encrypt
 	* @param {String} data  the data to encrypt
 	* @param {String} key  the password to be used for encrypting the file
+	* @param {String} iv  the initialization vector to be used for encrypting the file
 	* @param {Function} cb  a callback function that will be invoked on completion
 	* @description
-	* Method will encrypt a file with 'aes-256-ctr'.
+	* Method will encrypt a file with 'aes-256-gcm'.
 */
 var encrypt = function(data, key, iv, cb){
 	try {
-		var algorithm = 'aes-256-gcm'; //aes-256-ctr';
-
-		var cipher = crypto.createCipheriv(algorithm, key, iv);
+		var cipher = crypto.createCipheriv(encryptAlgorithm, key, iv);
 		var result = cipher.update(data, 'utf8', 'hex');
 		result += cipher.final('hex');
+		
 		var tag = cipher.getAuthTag();
-
-		console.log('encrypt completed');
 		
 		var error;
 		if (result.length == 0){
@@ -53,9 +54,7 @@ var encrypt = function(data, key, iv, cb){
 */
 var decrypt = function(encrypted, key, iv, cb){
 	try {
-		var algorithm = 'aes-256-gcm'; //aes-256-ctr';
-
-		var decipher = crypto.createDecipheriv(algorithm, key, iv);
+		var decipher = crypto.createDecipheriv(encryptAlgorithm, key, iv);
 		decipher.setAuthTag(encrypted.tag);
   		var result = decipher.update(encrypted.content, 'hex', 'utf8');
 		result += decipher.final('utf8');
@@ -75,9 +74,7 @@ var decrypt = function(encrypted, key, iv, cb){
 
 var hashData = function(data, salt, cb){
 	try {
-		var algorithm = 'sha512';
-
-		var hmac = crypto.createHmac(algorithm, salt);
+		var hmac = crypto.createHmac(hashAlgorithm, salt);
 		hmac.update(data);
 		var result = hmac.digest('hex');
 
@@ -88,7 +85,6 @@ var hashData = function(data, salt, cb){
 		}
 
 		cb(error, result);
-
 	} catch (e){
 		cb(e);
 	}
@@ -97,7 +93,6 @@ var hashData = function(data, salt, cb){
 var hashData2 = function(data, salt, cb){
 	var iterations = 5000;
 	var keylen = 128; // bytes
-	var digest = 'sha512';
 
 	var callback = function(err, result){
 		var error;
@@ -105,8 +100,6 @@ var hashData2 = function(data, salt, cb){
 		if (err){
 			error = err;
 		} else {
-			var hexHash = Buffer(data, 'utf8').toString('hex');
-
 			if (result.length == 0){
 				result = undefined;
 				error = {error: 1, message: 'EMPTY AFTER HASHDATA2', statusCode: 0};
@@ -116,15 +109,23 @@ var hashData2 = function(data, salt, cb){
 		cb(error, result);
 	};
 
-	crypto.pbkdf2(data, salt, iterations, keylen, digest, callback);
-}
+	crypto.pbkdf2(data, salt, iterations, keylen, hashAlgorithm, callback);
+};
 
 
+var getInstance = function(){
+	if (!instance){
+		instance = {
+			encrypt: encrypt,
+			decrypt: decrypt,
+			hashData: hashData,
+			hashData2: hashData2
+		};
+	}
+	
+	return instance;
+};
 
-// export an object to node with only the functionality to be exposed
 module.exports = {
-	encrypt: encrypt,
-	decrypt: decrypt,
-	hashData: hashData,
-	hashData2: hashData2
+	getInstance: getInstance
 };
