@@ -1,0 +1,30 @@
+cd /usr/share/nginx/html/DDPortal/API
+
+ENV=alpha pm2 start main.js --name DDPortalAPI
+
+cd /usr/share/nginx/html/DDPortal/Website
+
+ENV=alpha pm2 start main.js --name DDPortalWebsite
+
+cd /usr/share/nginx/html/DDFeeder
+
+ENV=alpha pm2 start main.js --name DDFeeder
+
+pm2 save
+
+pm2 logs (or pm2 logs DDFeeder)
+
+pm2 startup systemd
+
+
+
+// install pm2-lograte to avoid logs getting too big
+pm2 install pm2-logrotate
+
+// configure 
+pm2 set pm2-logrotate max_size 1MB
+pm2 set pm2-logrotate retain 1 (later in production we might want to use 6 or 7)
+
+
+// physical log files are in
+ls /root/.pm2/logs/
